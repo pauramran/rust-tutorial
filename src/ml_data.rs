@@ -31,10 +31,10 @@ pub struct TreeNode {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MLDataContainer {
-    element_statistics: MLData,
+    pub element_statistics: MLData,
 }
 
-fn read_ml_json(path: &Path) -> MLDataContainer{
+pub fn read_ml_json(path: &Path) -> MLDataContainer{
 
     let json_str = fs::read_to_string(path).unwrap();
 

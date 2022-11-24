@@ -1,6 +1,100 @@
+use std::path::Path;
 mod ml_data;
 
-fn main() {}
+// para la correlacion hay que ignorar WH, HT, LT, TP
+
+//fn correlacion(nodo:Hashmap<String, String>, nodos:&Vect<Hashmap<String,String>>) -> Vec<f64>{
+//    nodes.iter().map(|g|{
+//        let mut sum = 0.0;
+//        for (k,v) in nodo.iter(){
+//            sum += g.iter().filter(|gk,gv| *gk==k && gv==v).count();
+//        }
+//        sum
+//    }).collect()
+    // normalizar?
+//}
+
+//fn map_nodo_to_hashmap(nodes:Vec<Nodo>) -> Vec<HasMap<String,String>>{
+//    nodos.into_iter().map(|n| n.a.clone() ).collect()
+//}
+
+fn print_type_of<T>(_: &T) {
+    println!("{}", std::any::type_name::<T>())
+}
+
+fn correlacion(nodos: ml_data::MLDataContainer, nodo: Option<ml_data::Node>) -> Vec<f64> {
+    let Nodo = nodo.unwrap();
+    let mut v_corr = Vec::new();
+    let mut max = 0.0;
+    for elem in nodos.element_statistics.nodes.into_iter(){
+        let mut sum = 0.0;
+        //print_type_of(&Nodo);
+        for (key, value) in &Nodo.a{
+            if key != "WH" && key != "HT" && key != "LT" && key != "TP"
+            {
+                if elem.a.contains_key(key) {
+                    if *elem.a.get(key).unwrap() == *value {
+                        sum += 1.0;
+                    }
+                }
+                //println!("{sum}");
+            }
+        }
+        if sum > max {
+            max = sum;
+        }
+        v_corr.push(sum);
+    }
+    println!("{max}");
+    let mut c = 0;
+    for elem in v_corr.iter(){
+        if *elem == max{
+            c = c+1;
+        }
+    }
+    println!("{c}");
+    v_corr
+}
+
+fn find_xx(path: &Path) -> Option<ml_data::Node> {
+    let nodes = ml_data::read_ml_json(&path);
+    let find = nodes.element_statistics.nodes.into_iter().find(|node|{
+        if let Some(XX) = node.a.get("XX"){
+            XX == "true"
+        }
+        else {
+            false
+        }
+    });
+    if let Some(datanode) = find{
+        //print!("{:?}",datanode.a);
+        Some(datanode)
+        //print_type_of(&datanode)
+    }
+    //datanode
+    else{
+        None
+    }
+}
+
+fn main() {
+    let path = Path::new("resources/1663154348643_8ZGUJJLLWV/ml_data/1663154348643_8ZGUJJLLWV.json");
+    let path_comp = Path::new("resources/1663154348643_8ZGUJJLLWV/ml_data/1663154348643_8ZGUJJLLWV.json");
+    let data_comp = ml_data::read_ml_json(&path_comp);
+    let node_xx = find_xx(&path);
+    println!("{:?}",node_xx);
+
+    // vector
+    let v_corr = correlacion(data_comp, node_xx);
+    println!("{:?}",v_corr);
+    let data_comp = ml_data::read_ml_json(&path_comp);
+
+    // vector normalizado
+    let v = v_corr.clone();
+    let dot:f64 = v_corr.iter().zip(v.iter()).map(|(x,y)| x*y).sum();
+    let v_corr_norm:Vec<f64> = v_corr.iter().map(|x| x/dot).collect();
+    println!("{:?}",v_corr_norm);
+}
 
 fn consume_s(s: String) -> usize {
     s.len()
@@ -46,7 +140,7 @@ mod topology {
                 p_br: Point::new(max_x, max_y),
             }
         }
-        
+
         pub fn lower(&self) -> &Point {
             &self.p_tl
         }
